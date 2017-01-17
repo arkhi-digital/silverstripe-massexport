@@ -1,0 +1,20 @@
+{
+  "name": "steadlane/silverstripe-massexport",
+  "description": "A tool that allows you to export multiple Models at once and zip them into a single file for a specific date range",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Reece Alexander",
+      "email": "reece@steadlane.com.au",
+      "role": "Maintainer / Developer"
+    }
+  ],
+  "homepage": "http://steadlane.com.au",
+  "type": "silverstripe-module",
+  "support": {
+    "email": "reece@steadlane.com.au"
+  },
+  "require": {
+    "silverstripe/framework": "^3.1"
+  }
+}
