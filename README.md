@@ -2,8 +2,7 @@
 
 # Introduction
 
-This module dynamically detects any subclasses of `ModelAdmin` and adapts to the `$managed_models` defined within to provide a centralised interface that can be used to export data from any one or more models from within a specified date range which is then zipped into a single file and downloaded.
-
+This module dynamically detects any subclasses of `ModelAdmin` and adapts to the `$managed_models` defined within, and also discovers all [UserDefinedForm](https://github.com/silverstripe/silverstripe-userforms) submissions to provide a centralised interface that can be used to export data from any one or more models from within a specified date range which is then zipped into a single file and downloaded.
 
 ## Installation
 
