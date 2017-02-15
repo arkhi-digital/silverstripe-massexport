@@ -1,6 +1,10 @@
 <?php
 
-class MassExportForm extends Form {
+/**
+ * Class MassExportForm
+ */
+class MassExportForm extends Form
+{
 
     /**
      * MassExportForm constructor.
@@ -23,20 +27,29 @@ class MassExportForm extends Form {
         );
 
         $actions = FieldList::create(
-            FormAction::create('export', 'Export & Download')/*,
+            FormAction::create('processExportForm', 'Export & Download')/*,
             FormAction::create('exportEmail', 'Export & Email')
                 ->setUseButtonTag(true)
                 ->setAttribute('onclick', 'return false;')
                 ->addExtraClass('massexport-email')*/
         );
 
-        parent::__construct($controller, $name, $fields, $actions);
+        $validator = RequiredFields::create(
+            array(
+                'exportFrom',
+                'exportTo',
+                'modelsToExport'
+            )
+        );
+
+        parent::__construct($controller, $name, $fields, $actions, $validator);
     }
 
     /**
-     *
+     * Generates a mapped list of ID => Model Name
      */
-    public function generateModelList() {
+    public function generateModelList()
+    {
         $modelAdmins = array_reverse(array_keys(ClassInfo::subclassesFor('ModelAdmin'))); // put my thang down flip it and reverse it
         array_pop($modelAdmins); // gets rid of the ModelAdmin class
 
@@ -51,6 +64,31 @@ class MassExportForm extends Form {
             foreach ($managedModels as $model) {
                 $map[$model] = implode(' ', preg_split('/(?=[A-Z])/', $model));
             }
+        }
+
+        $map = array_merge($map, $this->generateUserDefinedFormsList());
+
+        return $map;
+    }
+
+    /**
+     * Generates a readable equivalent of UDF_{PageID} => PageTitle: User Defined Form
+     * The UDF_ part should be detected in the post handling and handled accordingly
+     *
+     * @return array
+     */
+    public function generateUserDefinedFormsList()
+    {
+        if (!class_exists('UserDefinedForm')) {
+            return array();
+        }
+
+        $map = array();
+        $pageIds = array_keys(SubmittedForm::get()->map('ParentID', 'ParentID')->toArray());
+
+        foreach ($pageIds as $pageId) {
+            $record = SiteTree::get()->byID($pageId);
+            $map['UDF_' . $pageId] = 'User Defined Form Submissions: ' . $record->Title;
         }
 
         return $map;
