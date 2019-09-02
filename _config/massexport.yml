@@ -1,0 +1,7 @@
+---
+Name: steadlane-massexport
+---
+
+SteadLane\MassExport\MassExportLeftAndMain:
+  debug: false
+  export_directory: '' # work in progress

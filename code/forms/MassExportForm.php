@@ -26,6 +26,7 @@ class MassExportForm extends Form
      *
      * @param Controller $controller
      * @param string $name
+     * @throws \Exception
      */
     public function __construct($controller, $name)
     {

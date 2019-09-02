@@ -32,6 +32,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
     public function init()
     {
         parent::init();
+        // @TODO: update proper for SS4, until then the module must be in the massexport directory
         Requirements::css('massexport/css/massexport.css');
         Requirements::javascript('massexport/javascript/massexport.js');
     }
@@ -81,7 +82,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             $udfs[] = (int)str_replace('UDF_', '', $model);
         }
 
-		// @TODO: default this somewhere else; also allow changing it in config
+        // @TODO: fix directory here
         $zip = new \ZipArchive();
         $zipFilename = __DIR__ . "/../exports/MassExport_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.zip';
         if (file_exists($zipFilename)) {
@@ -103,6 +104,8 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             if (substr($modelName,0,1)=='_') {
                 $modelName=substr($modelName,1);
             }
+
+            // @TODO: fix directory here
             $filename = __DIR__ . "/../exports/{$modelName}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
 
             $fp = fopen($filename, "w+");
@@ -151,6 +154,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             $title = $page->Title;
             $this->sanitiseTitleName($title);
 
+            // @TODO: fix directory here
             $filename = __DIR__ . "/../exports/UDF_{$title}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
 
             $heading = array('Created', 'LastEdited');

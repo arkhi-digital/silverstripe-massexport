@@ -8,17 +8,18 @@
       "role": "Maintainer / Developer"
     }
   ],
-  "homepage": "http://steadlane.com.au",
+  "homepage": "https://steadlane.com.au/",
   "type": "silverstripe-module",
   "support": {
     "email": "reece@steadlane.com.au"
   },
   "require": {
-    "silverstripe/framework": "^3.1"
+    "ext-zip": "*",
+    "silverstripe/framework": ">=4.0,<5.0"
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "1.1.x-dev"
+      "dev-master": "2.0.x-dev"
     }
   }
 }
