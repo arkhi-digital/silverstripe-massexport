@@ -1,8 +1,22 @@
 <?php
 
+namespace SteadLane\MassExport;
+
+use SilverStripe\Admin\LeftAndMain;
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Forms\Form;
+use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\PermissionProvider;
+use SilverStripe\UserForms\Model\Submission\SubmittedForm;
+use SilverStripe\View\Requirements;
+
+/**
+ * Class MassExportLeftAndMain
+ * @package SteadLane\MassExport
+ */
 class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
 {
-
     private static $url_segment = 'export';
     private static $menu_title = 'Mass Export';
 
@@ -41,10 +55,11 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
     /**
      * Form handling
      *
-     * @param SS_HTTPRequest $data
+     * @param array $data
      * @param Form $form
+     * @return \SilverStripe\Control\HTTPResponse|null
      */
-    public function processExportForm(SS_HTTPRequest $data, Form $form)
+    public function processExportForm(array $data, Form $form)
     {
         $vars = $this->request->postVars();
 
@@ -66,9 +81,14 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             $udfs[] = (int)str_replace('UDF_', '', $model);
         }
 
-        $zip = new ZipArchive();
+		// @TODO: default this somewhere else; also allow changing it in config
+        $zip = new \ZipArchive();
         $zipFilename = __DIR__ . "/../exports/MassExport_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.zip';
-        $zip->open($zipFilename, ZipArchive::CREATE);
+        if (file_exists($zipFilename)) {
+            @unlink($zipFilename);
+        }
+
+        $zip->open($zipFilename, \ZipArchive::CREATE);
 
         foreach ($models as $model) {
             /** @var DataObject $model */
@@ -78,7 +98,12 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
                 continue;
             }
 
-            $filename = __DIR__ . "/../exports/{$model}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
+            //$modelName=basename(str_replace('\\','/',$model));
+            $modelName=str_replace('\\','_',$model);
+            if (substr($modelName,0,1)=='_') {
+                $modelName=substr($modelName,1);
+            }
+            $filename = __DIR__ . "/../exports/{$modelName}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
 
             $fp = fopen($filename, "w+");
 
@@ -108,6 +133,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
         }
 
         foreach ($udfs as $pageId) {
+            /** @var DataList $submissions */
             $submissions = SubmittedForm::get()->filter(
                 array(
                     'ParentID' => $pageId,
@@ -120,6 +146,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
                 continue;
             }
 
+            /** @var SiteTree $page */
             $page = SiteTree::get()->byID($pageId);
             $title = $page->Title;
             $this->sanitiseTitleName($title);
@@ -130,7 +157,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
 
             $first = clone $submissions;
             $first = $first->first();
-
+            /** @var SubmittedForm $first */
             $firstValues = $first->Values();
 
             foreach ($firstValues as $value) {
@@ -182,5 +209,21 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
     public function sanitiseTitleName(&$title) {
         $title = preg_replace('/\s+/i', '_', $title);
         $title = preg_replace("/[^A-Za-z0-9_]/", '', $title);
+    }
+
+    public function InfoMessage()
+    {
+        if (!class_exists('ZipArchive')) {
+            return "'ZipArchive' PHP class not found. Zip functionality will not work.";
+        }
+        return '';
+    }
+
+    public function InfoMessageCls()
+    {
+        if (!class_exists('ZipArchive')) {
+            return 'danger';
+        }
+        return '';
     }
 }
