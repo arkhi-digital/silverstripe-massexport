@@ -17,7 +17,7 @@ class MassExportRecipientForm extends Form {
         );
 
         $actions = FieldList::create(
-            FormAction::create('send', 'Continue Export & Send')
+            FormAction::create('send', 'Continue Export & Send')->addExtraClass('btn btn-primary action')
         );
 
         parent::__construct($controller, $name, $fields, $actions);

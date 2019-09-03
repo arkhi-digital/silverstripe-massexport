@@ -48,14 +48,16 @@ class MassExportForm extends Form
         $actions = FieldList::create(
             FormAction::create('processExportForm', 'Export & Download')
                 ->addExtraClass('btn action btn-primary')
+            // @TODO: might fix this one day, still issues to be worked out
             /*,FormAction::create('exportEmail', 'Export & Email')
                 ->setUseButtonTag(true)
                 ->setAttribute('onclick', 'return false;')
-                ->addExtraClass('massexport-email')*/
+                ->addExtraClass('massexport-email-button btn action btn-secondary')*/
         );
 
         $validator = RequiredFields::create(
             array(
+                // @TODO: date fields should be optional
                 'exportFrom',
                 'exportTo',
                 'modelsToExport'
@@ -63,6 +65,7 @@ class MassExportForm extends Form
         );
 
         parent::__construct($controller, $name, $fields, $actions, $validator);
+        $this->addExtraClass('massexport-form');
     }
 
     /**
@@ -91,7 +94,26 @@ class MassExportForm extends Form
             }
         }
 
+        $additionalModels=MassExport::config()->get('additional_models');
+        if ($additionalModels) {
+            foreach($additionalModels as $additionalModel) {
+                if (!empty($additionalModel) && class_exists($additionalModel)) {
+                    $map[$additionalModel]=implode(' ', preg_split('/(?=[A-Z])/', $additionalModel));
+                }
+            }
+        }
+
+        $excludedModels=MassExport::config()->get('excluded_models');
+
         $map = array_merge($map, $this->generateUserDefinedFormsList());
+
+        if ($excludedModels) {
+            foreach($excludedModels as $excludedModel) {
+                if ($excludedModel!='' && isset($map[$excludedModel])) {
+                    unset($map[$excludedModel]);
+                }
+            }
+        }
 
         return $map;
     }

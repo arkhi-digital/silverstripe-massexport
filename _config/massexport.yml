@@ -2,6 +2,10 @@
 Name: steadlane-massexport
 ---
 
-SteadLane\MassExport\MassExportLeftAndMain:
+SteadLane\MassExport\MassExport:
   debug: false
   export_directory: '' # work in progress
+#  additional_models:        # Add additional models like so
+#    - "Namespace\\Class"
+#  excluded_models:          # Exclude models like so
+#    - "Namespace\\Class"

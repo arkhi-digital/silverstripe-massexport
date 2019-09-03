@@ -12,13 +12,15 @@ use SilverStripe\UserForms\Model\Submission\SubmittedForm;
 use SilverStripe\View\Requirements;
 
 /**
- * Class MassExportLeftAndMain
+ * Class MassExport
  * @package SteadLane\MassExport
  */
-class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
+class MassExport extends LeftAndMain implements PermissionProvider
 {
-    private static $url_segment = 'export';
+    private static $url_segment = 'mass-export';
     private static $menu_title = 'Mass Export';
+    private static $menu_icon_class = 'font-icon-database';
+    private static $menu_priority = -1;
 
     private static $allowed_actions = array(
         'index',
@@ -32,9 +34,8 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
     public function init()
     {
         parent::init();
-        // @TODO: update proper for SS4, until then the module must be in the massexport directory
-        Requirements::css('massexport/css/massexport.css');
-        Requirements::javascript('massexport/javascript/massexport.js');
+        Requirements::css('steadlane/silverstripe-massexport:client/dist/styles/massexport.css');
+        Requirements::javascript('steadlane/silverstripe-massexport:client/dist/js/massexport.js');
     }
 
     /**
@@ -64,6 +65,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
     {
         $vars = $this->request->postVars();
 
+        // @TODO: allow for empty date fields
         $filter = array(
             'Created:GreaterThanOrEqual' => date('Y-m-d H:i:s', strtotime($vars['exportFrom'])),
             'Created:LessThanOrEqual' => date('Y-m-d H:i:s', strtotime($vars['exportTo'] . " 23:59:59"))
@@ -82,13 +84,14 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             $udfs[] = (int)str_replace('UDF_', '', $model);
         }
 
-        // @TODO: fix directory here
         $zip = new \ZipArchive();
-        $zipFilename = __DIR__ . "/../exports/MassExport_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.zip';
+        $zipFilename = $this->getMassExportDirectory()."/MassExport_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.zip';
+
         if (file_exists($zipFilename)) {
             @unlink($zipFilename);
         }
 
+        $fileList=[];
         $zip->open($zipFilename, \ZipArchive::CREATE);
 
         foreach ($models as $model) {
@@ -105,8 +108,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
                 $modelName=substr($modelName,1);
             }
 
-            // @TODO: fix directory here
-            $filename = __DIR__ . "/../exports/{$modelName}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
+            $filename = $this->getMassExportDirectory()."/{$modelName}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
 
             $fp = fopen($filename, "w+");
 
@@ -131,6 +133,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
 
             fclose($fp);
             $zip->addFile($filename, basename($filename));
+            array_push($fileList, $filename);
             $fileCount++;
 
         }
@@ -154,8 +157,7 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             $title = $page->Title;
             $this->sanitiseTitleName($title);
 
-            // @TODO: fix directory here
-            $filename = __DIR__ . "/../exports/UDF_{$title}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
+            $filename = $this->getMassExportDirectory()."/UDF_{$title}_" . date('Ymd', strtotime($vars['exportFrom'])) . '-' . date('Ymd', strtotime($vars['exportTo'])) . '.csv';
 
             $heading = array('Created', 'LastEdited');
 
@@ -187,10 +189,18 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
 
             fclose($fp);
             $zip->addFile($filename, basename($filename));
+            array_push($fileList, $filename);
             $fileCount++;
         }
 
         $zip->close();
+
+        // Clean up
+        foreach($fileList as $fn) {
+            if (file_exists($fn)) {
+                @unlink($fn);
+            }
+        }
 
         if (!$fileCount) {
             if (file_exists($zipFilename)) {
@@ -200,14 +210,15 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             return $this->redirectBack();
         }
 
-        if (isset($vars['action_processExportForm'])) {
-
-            header('Content-Type: application/zip');
-            header('Content-disposition: attachment; filename='.basename($zipFilename));
-            header('Content-Length: ' . filesize($zipFilename));
-            readfile($zipFilename);
+        if (empty($zipFilename) || !file_exists($zipFilename)) {
+            $form->sessionMessage('Error while building zip file.', 'bad');
+            return $this->redirectBack();
         }
 
+        header('Content-Type: application/zip');
+        header('Content-disposition: attachment; filename='.basename($zipFilename));
+        header('Content-Length: ' . filesize($zipFilename));
+        readfile($zipFilename);
     }
 
     public function sanitiseTitleName(&$title) {
@@ -229,5 +240,13 @@ class MassExportLeftAndMain extends LeftAndMain implements PermissionProvider
             return 'danger';
         }
         return '';
+    }
+
+    protected function getMassExportDirectory()
+    {
+        // @TODO: allow changing directory using config
+        $dir=__DIR__ . "/../exports";
+        $dir=str_replace('\\', '/', $dir);
+        return $dir;
     }
 }

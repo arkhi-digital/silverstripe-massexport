@@ -14,6 +14,26 @@ composer require steadlane/silverstripe-massexport
 
 Run `/dev/build` afterwards and `?flush=1` for good measure for SilverStripe to become aware of this module
 
+## Configuration
+
+Models can be included or excluded via config files.
+
+To include additional classes, add an `additional_models` setting:
+
+```
+SteadLane\MassExport\MassExport:
+  additional_models:        # Add additional models like so
+    - "Namespace\\Class"
+```
+
+To exclude classes, add an `excluded_models` setting:
+
+```
+SteadLane\MassExport\MassExport:
+  excluded_models:          # Exclude models like so
+    - "Namespace\\Class"
+```
+
 ## Contributing
 
 If you feel you can improve this module in any way, shape or form please do not hesitate to submit a PR for review.
