@@ -63,6 +63,8 @@ class MassExport extends LeftAndMain implements PermissionProvider
      */
     public function processExportForm(array $data, Form $form)
     {
+        $this->CleanUpOldFiles();
+
         $vars = $this->request->postVars();
 
         // @TODO: allow for empty date fields
@@ -248,5 +250,28 @@ class MassExport extends LeftAndMain implements PermissionProvider
         $dir=__DIR__ . "/../exports";
         $dir=str_replace('\\', '/', $dir);
         return $dir;
+    }
+
+    protected function CleanUpOldFiles()
+    {
+        $maxAge=(1 * 86400); // 1 day
+        $dir=$this->getMassExportDirectory();
+        $h=opendir($dir);
+        if ($h) {
+            while (($fn=readdir($h))) {
+                if ($fn=='..' || $fn=='.') { continue; }
+                $ext=strtolower( substr($fn, strrpos($fn, '.')+1) );
+                if ($ext=='zip' || $ext=='csv') {
+                    $tm=@filemtime($dir.'/'.$fn);
+                    if ($tm) {
+                        $age=time()-$tm;
+                        if ($age>$maxAge) {
+                            @unlink($dir.'/'.$fn);
+                        }
+                    }
+                }
+            }
+            closedir($h);
+        }
     }
 }
